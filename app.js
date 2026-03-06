@@ -18,8 +18,10 @@ let currentUid = null;
 let state = { balance: 0, transactions: [], subscriptions: [] };
 
 // ---- Currency ----
-const RUPEE = '\u20B9';
-const fmt   = (n) => RUPEE + Math.abs(n).toFixed(2);
+const fmt = (n) => new Intl.NumberFormat('en-IN', {
+  style: 'currency', currency: 'INR',
+  minimumFractionDigits: 2, maximumFractionDigits: 2
+}).format(Math.abs(n));
 const today = () => new Date().toISOString().split('T')[0];
 
 // ---- Firestore ----
