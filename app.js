@@ -128,14 +128,18 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
 
 function friendlyError(code) {
   const map = {
-    'auth/user-not-found':      'No account found with that email.',
-    'auth/wrong-password':      'Incorrect password.',
-    'auth/invalid-email':       'Invalid email address.',
-    'auth/email-already-in-use':'An account with this email already exists.',
-    'auth/invalid-credential':  'Incorrect email or password.',
-    'auth/too-many-requests':   'Too many attempts. Try again later.',
+    'auth/user-not-found':           'No account found with that email.',
+    'auth/wrong-password':           'Incorrect password.',
+    'auth/invalid-email':            'Invalid email address.',
+    'auth/email-already-in-use':     'An account with this email already exists.',
+    'auth/invalid-credential':       'Incorrect email or password.',
+    'auth/too-many-requests':        'Too many attempts. Try again later.',
+    'auth/popup-blocked':            'Popup was blocked — please allow popups for this site.',
+    'auth/popup-closed-by-user':     'Sign-in cancelled.',
+    'auth/cancelled-popup-request':  'Sign-in cancelled.',
+    'auth/operation-not-allowed':    'Google sign-in is not enabled. Enable it in the Firebase Console.',
   };
-  return map[code] || 'Something went wrong. Please try again.';
+  return map[code] || `Something went wrong (${code}). Please try again.`;
 }
 
 // ---- Toast ----
