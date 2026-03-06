@@ -217,7 +217,9 @@ function renderSubList(type, subs) {
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
           <span class="sub-amount">${fmt(s.amount)}</span>
-          <button class="btn btn-danger" onclick="removeSub(${globalIdx})">&#x2715;</button>
+          <div id="sub-del-${globalIdx}">
+            <button class="btn btn-danger" onclick="showDelConfirm('sub',${globalIdx})">&#x2715;</button>
+          </div>
         </div>
       </div>`;
   }).join('');
@@ -229,7 +231,7 @@ function renderTransactions() {
     el.innerHTML = '<div class="empty-state">No transactions yet.</div>';
     return;
   }
-  const sorted = [...state.transactions].reverse();
+  const sorted = state.transactions.map((tx, i) => ({ ...tx, _idx: i })).reverse();
   el.innerHTML = sorted.map(tx => {
     const icons = { income: '↑', expense: '↓', sub: '~' };
     const sign  = tx.type === 'income' ? '+' : '-';
@@ -240,7 +242,12 @@ function renderTransactions() {
           <div class="tx-desc">${escHtml(tx.desc)}</div>
           <div class="tx-date">${tx.date}</div>
         </div>
-        <div class="tx-amount ${tx.type}">${sign}${fmt(tx.amount)}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="tx-amount ${tx.type}">${sign}${fmt(tx.amount)}</div>
+          <div id="tx-del-${tx._idx}">
+            <button class="btn btn-danger" style="padding:4px 8px;font-size:0.75rem;" onclick="showDelConfirm('tx',${tx._idx})">&#x2715;</button>
+          </div>
+        </div>
       </div>`;
   }).join('');
 }
@@ -293,11 +300,36 @@ window.addSubscription = async function () {
   showToast(name + ' added', '#5b52e8');
 };
 
-window.removeSub = async function (idx) {
-  const sub = state.subscriptions[idx];
-  state.subscriptions.splice(idx, 1);
-  await save(); render();
-  showToast(sub.name + ' removed', '#dc2626');
+window.showDelConfirm = function (type, idx) {
+  const el = document.getElementById(`${type}-del-${idx}`);
+  el.innerHTML = `
+    <button class="btn btn-danger" style="padding:4px 10px;font-size:0.78rem;" onclick="confirmDel('${type}',${idx})">Confirm</button>
+    <button class="btn" style="padding:4px 10px;font-size:0.78rem;background:var(--surface2);" onclick="cancelDel('${type}',${idx})">Cancel</button>`;
+};
+
+window.cancelDel = function (type, idx) {
+  const el = document.getElementById(`${type}-del-${idx}`);
+  if (type === 'sub') {
+    el.innerHTML = `<button class="btn btn-danger" onclick="showDelConfirm('sub',${idx})">&#x2715;</button>`;
+  } else {
+    el.innerHTML = `<button class="btn btn-danger" style="padding:4px 8px;font-size:0.75rem;" onclick="showDelConfirm('tx',${idx})">&#x2715;</button>`;
+  }
+};
+
+window.confirmDel = async function (type, idx) {
+  if (type === 'sub') {
+    const sub = state.subscriptions[idx];
+    state.subscriptions.splice(idx, 1);
+    await save(); render();
+    showToast(sub.name + ' removed', '#dc2626');
+  } else {
+    const tx = state.transactions[idx];
+    if (tx.type === 'income') state.balance -= tx.amount;
+    else                      state.balance += tx.amount;
+    state.transactions.splice(idx, 1);
+    await save(); render();
+    showToast('Transaction deleted', '#dc2626');
+  }
 };
 
 window.clearHistory = async function () {
