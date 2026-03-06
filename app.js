@@ -46,7 +46,8 @@ async function loadData() {
     if (data.encryptedState) {
       state = decryptData(data.encryptedState);
     } else {
-      state = data; // old plain data
+      state = data; // old plain data — migrate to encrypted on next save
+      await save();
     }
   } else {
     state = { balance: 0, transactions: [], subscriptions: [] };
