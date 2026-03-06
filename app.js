@@ -3,7 +3,9 @@ import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signOut
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
   doc,
@@ -105,6 +107,15 @@ document.getElementById('btn-signup').addEventListener('click', async () => {
   if (password.length < 6)  { showAuthError('Password must be at least 6 characters.'); return; }
   try {
     await createUserWithEmailAndPassword(auth, email, password);
+    clearAuthError();
+  } catch (e) {
+    showAuthError(friendlyError(e.code));
+  }
+});
+
+document.getElementById('btn-google').addEventListener('click', async () => {
+  try {
+    await signInWithPopup(auth, new GoogleAuthProvider());
     clearAuthError();
   } catch (e) {
     showAuthError(friendlyError(e.code));
