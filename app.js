@@ -13,6 +13,20 @@ import {
   setDoc
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
+// ---- Encryption ----
+const getEncryptionKey = () => CryptoJS.SHA256(currentUid).toString();
+
+function encryptData(data) {
+  const key = getEncryptionKey();
+  return CryptoJS.AES.encrypt(JSON.stringify(data), key).toString();
+}
+
+function decryptData(encryptedData) {
+  const key = getEncryptionKey();
+  const bytes = CryptoJS.AES.decrypt(encryptedData, key);
+  return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+}
+
 // ---- State ----
 let currentUid = null;
 let state = { balance: 0, transactions: [], subscriptions: [] };
@@ -27,13 +41,21 @@ const today = () => new Date().toISOString().split('T')[0];
 // ---- Firestore ----
 async function loadData() {
   const snap = await getDoc(doc(db, 'users', currentUid));
-  state = snap.exists()
-    ? snap.data()
-    : { balance: 0, transactions: [], subscriptions: [] };
+  if (snap.exists()) {
+    const data = snap.data();
+    if (data.encryptedState) {
+      state = decryptData(data.encryptedState);
+    } else {
+      state = data; // old plain data
+    }
+  } else {
+    state = { balance: 0, transactions: [], subscriptions: [] };
+  }
 }
 
 async function save() {
-  await setDoc(doc(db, 'users', currentUid), state);
+  const encryptedState = encryptData(state);
+  await setDoc(doc(db, 'users', currentUid), { encryptedState });
 }
 
 // ---- Auth State ----
